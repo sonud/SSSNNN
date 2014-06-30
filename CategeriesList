@@ -1,0 +1,609 @@
+package com.khoobsurati.nursaryrhymes;
+
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
+import com.google.analytics.tracking.android.EasyTracker;
+import com.khoobsurati.adapter.ImageFlipperFooterBannerTemplate;
+import com.khoobsurati.adapter.ImageFlipperHeaderBannerTemplate;
+import com.khoobsurati.model.VideoDetails;
+import com.khoobsurati.nursaryrhymes.Home.GetBannerinformationAsyntaskNEw;
+import com.khoobsurati.websercives.VideoListAsync;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.StrictMode;
+import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterViewFlipper;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ViewFlipper;
+
+public class CategeriesList extends Activity {
+	private AdapterViewFlipper headerAdapterViewFlipper,footerAdapterViewFlipper;
+	private boolean bool_english = false, bool_hindi = false;
+	private TextView textview_hindi, textview_english, textview_header_title;
+	private ListView listview_english, listview_hindi;
+	private MainLayout mLayout;
+	private Button button_nurseryrhymes,button_fun_game,button_kids_popular_series,button_kids_popular_movie,button_learnwith_fun,
+	button_moral,button_bedtime,button_rhymeswith_lyrics;
+	private String selectelan;
+	private String[]position_id,header_url,footer_url,header_image,footer_image,ad_id;
+	private String app_url_on_awtchonline_screen,SCreen_Name;
+	private ImageView imageview_slide_button,imageview_hindi_cat,imageview_english_cat;
+	private String[] cat_name = { "Nursery Rhymes", "Rhymes With Lyrics",
+			"BedTime Stories", "Moral Stories", "Learn With Fun",
+			"Kids Popular Movies", "Kids Popular Series", "Fun Games" };
+	Animation bottomDown;
+	int mFlipping = 0 ;
+	int a=1;
+	int mFlipping2 = 0 ;// Initially flipping is off
+	Button mButton ; 
+	ProgressDialog dialog;
+	private ViewFlipper flipper_header_banner,flipper_footer_banner ;
+	
+
+	@SuppressLint("NewApi")
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.categerieslist);
+
+		oninitiate();
+		clickEvent();
+		
+		overridePendingTransition(R.anim.push_up_in, R.anim.push_up_out);
+
+		bottomDown = AnimationUtils.loadAnimation(this,R.anim.push_top_to_bottom);
+		   StrictMode.ThreadPolicy Tpolicy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+		   StrictMode.setThreadPolicy(Tpolicy); 
+	
+		selectelan = getIntent().getStringExtra("lang");
+		if (selectelan.equalsIgnoreCase("English")) {
+
+			textview_header_title
+					.setBackgroundResource(R.drawable.english_language);
+		} else {
+			textview_header_title
+					.setBackgroundResource(R.drawable.language_hindi);
+		}
+	
+		listview_english.setAdapter(new ArrayAdapter<String>(this,
+				R.layout.row_design_slide_categorieslist, R.id.text, cat_name));
+
+		listview_hindi.setAdapter(new ArrayAdapter<String>(this,
+				R.layout.row_design_slide_categorieslist, R.id.text, cat_name));
+
+		imageview_slide_button.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View v) {
+
+				// Show/hide the menu
+				toggleMenu(v);
+
+			}
+		});
+		
+		
+		runOnUiThread(new Runnable() 
+		  {
+				  	@Override
+				  	public void run() 
+				  		{
+				  				if (com.utils.Constant.getInstance().testNetwork(CategeriesList.this)) 
+				  				{
+						
+				  				//	doGCMRegister();                // Method doGCMRegister() 
+				  				       // Method getMyCurrentLocation()
+				
+				  					com.utils.Constant.IP_address = com.utils.Constant.getLocalIpv4Address();
+				  					System.out.println("ip new"+com.utils.Constant.IP_address);
+				  					
+				  					new GetBannerinformationAsyntaskNEw(CategeriesList.this,"CategeriesList").execute();   //   GetBannerinformationAsyntaskNEw
+					
+				  				 }
+				  				
+				  					else
+				  							{
+				  							  	Toast.makeText(CategeriesList.this,"Device not connected to internet.",Toast.LENGTH_LONG).show();
+				  							}
+				  		}
+			});
+	
+
+	}
+
+	private void clickEvent() {
+		textview_english.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				
+				selectelan = "English";
+				textview_header_title
+				.setBackgroundResource(R.drawable.english_language);
+
+				if (bool_english == false && bool_hindi == true) {
+					listview_english.startAnimation(bottomDown);
+					listview_hindi.setVisibility(View.GONE);
+					listview_english.setVisibility(View.VISIBLE);
+					bool_english = true;
+					bool_hindi = false;
+				} else {
+					if (bool_english == true) {
+						listview_hindi.setVisibility(View.GONE);
+						listview_english.setVisibility(View.GONE);
+						bool_english = false;
+					} else {
+						bool_english = true;
+						listview_hindi.setVisibility(View.GONE);
+						listview_english.startAnimation(bottomDown);
+						listview_english.setVisibility(View.VISIBLE);
+					}
+				}
+			}
+		});
+
+		textview_hindi.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				
+				selectelan = "Hindi";
+				textview_header_title
+				.setBackgroundResource(R.drawable.language_hindi);
+				
+				if (bool_english == true && bool_hindi == false) {
+					listview_english.setVisibility(View.GONE);
+					listview_hindi.startAnimation(bottomDown);
+					listview_hindi.setVisibility(View.VISIBLE);
+					bool_hindi = true;
+					bool_english = false;
+				} else {
+					if (bool_hindi == true) {
+
+						listview_hindi.setVisibility(View.GONE);
+						listview_english.setVisibility(View.GONE);
+						bool_hindi = false;
+					} else {
+						bool_hindi = true;
+						listview_hindi.startAnimation(bottomDown);
+						listview_english.setVisibility(View.GONE);
+						listview_hindi.setVisibility(View.VISIBLE);
+					}
+				}
+
+			}
+		});
+
+		button_nurseryrhymes.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				new VideoListAsync(CategeriesList.this, selectelan, "Nursery%20Rhymes")
+						.execute();
+
+			}
+		});
+		
+	
+		button_rhymeswith_lyrics.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				new VideoListAsync(CategeriesList.this, selectelan, "Rhymes%20With%20Lyrics")
+						.execute();
+
+			}
+		});
+		button_bedtime.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				new VideoListAsync(CategeriesList.this, selectelan, "Bedtime%20Stories")
+						.execute();
+
+			}
+		});
+		button_moral.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				new VideoListAsync(CategeriesList.this, selectelan, "Moral%20Stories")
+						.execute();
+
+			}
+		});
+		button_learnwith_fun.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				new VideoListAsync(CategeriesList.this, selectelan, "Learn%20With%20Fun")
+						.execute();
+
+			}
+		});
+		button_kids_popular_movie.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				new VideoListAsync(CategeriesList.this, selectelan, "Kids%20Popular%20Movies")
+						.execute();
+
+			}
+		});
+		button_kids_popular_series.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				new VideoListAsync(CategeriesList.this, selectelan, "Kids%20Popular%20Sereis")
+						.execute();
+
+			}
+		});
+		button_fun_game.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				new VideoListAsync(CategeriesList.this, selectelan, "Fun%20Games")
+						.execute();
+
+			}
+		});
+		
+		imageview_hindi_cat.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				selectelan = "Hindi";
+				textview_header_title
+				.setBackgroundResource(R.drawable.language_hindi);
+			}
+		});
+
+imageview_english_cat.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				selectelan = "English";
+				textview_header_title
+				.setBackgroundResource(R.drawable.english_language);
+			}
+		});
+
+
+
+listview_english.setOnItemClickListener(new OnItemClickListener() {
+
+	@Override
+	public void onItemClick(AdapterView<?> parent, View view, int position,
+			long id) {
+		
+		
+		String item_name = listview_english.getItemAtPosition(position).toString().replace(" ", "%20");
+		
+				new VideoListAsync(CategeriesList.this, selectelan,item_name)
+				.execute();
+				
+	}
+});
+
+
+listview_hindi.setOnItemClickListener(new OnItemClickListener() {
+
+	@Override
+	public void onItemClick(AdapterView<?> parent, View view, int position,
+			long id) {
+		
+		
+		String item_name = listview_english.getItemAtPosition(position).toString().replace(" ", "%20");
+	//	Toast.makeText(getBaseContext(), "cat name=="+item_name, Toast.LENGTH_SHORT).show();
+				new VideoListAsync(CategeriesList.this, selectelan,item_name)
+				.execute();
+				
+	}
+});
+
+	}
+
+	public void toggleMenu(View v) {
+		mLayout.toggleMenu();
+	}
+
+	private void oninitiate() {
+		// TODO Auto-generated method stub
+		listview_english = (ListView) findViewById(R.id.listview_english_cat);
+		listview_hindi = (ListView) findViewById(R.id.listview_hindi_cat);
+		mLayout = (MainLayout) findViewById(R.id.mainlayout);
+		
+		imageview_hindi_cat = (ImageView)findViewById(R.id.imageview_hindi_cat);
+		imageview_english_cat = (ImageView)findViewById(R.id.imageview_english_cat);
+
+		imageview_slide_button = (ImageView) findViewById(R.id.imageview_slide_button);
+		button_nurseryrhymes = (Button) findViewById(R.id.button_nurseryrhymes);
+		button_rhymeswith_lyrics = (Button) findViewById(R.id.button_rhymeswith_lyrics);
+		button_bedtime = (Button) findViewById(R.id.button_bedtime);
+		button_moral = (Button) findViewById(R.id.button_moral);
+		button_learnwith_fun = (Button) findViewById(R.id.button_learnwith_fun);
+		button_kids_popular_movie = (Button) findViewById(R.id.button_kids_popular_movie);
+		button_kids_popular_series = (Button) findViewById(R.id.button_kids_popular_series);
+		button_fun_game = (Button) findViewById(R.id.button_fun_game);
+		
+		textview_header_title = (TextView) findViewById(R.id.textview_header_title);
+		textview_english = (TextView) findViewById(R.id.textview_english);
+		textview_hindi = (TextView) findViewById(R.id.textview_hindi);
+		
+		 headerAdapterViewFlipper = (AdapterViewFlipper)findViewById(R.id.adapterviewFlipper_header);
+		 footerAdapterViewFlipper = (AdapterViewFlipper)findViewById(R.id.adapterviewFlipper_footer);
+
+	}
+	public class GetBannerinformationAsyntaskNEw extends AsyncTask<String, Void, Boolean> 
+	{
+		public GetBannerinformationAsyntaskNEw(Activity activity, String screenname) 
+			{
+					Activity context = activity;
+					dialog = new ProgressDialog(context);
+					SCreen_Name = screenname;
+			}
+
+	
+	@Override
+	protected void onPreExecute() 
+			{
+					 //	dialog = ProgressDialog.show(context, "", "Please Wait...", true);
+					 // this.dialog.setMessage("Sending email...");
+					// dialog.getWindow().setLayout(400, 300);
+					//dialog.show();
+			}
+	
+	@SuppressLint("NewApi")
+	@Override
+	protected void onPostExecute(final Boolean success) 
+			{
+		
+						//if (dialog.isShowing()) {
+		
+					  
+		if(a==0){
+			//	Toast.makeText(VideoList.this, "Records not found.!", Toast.LENGTH_SHORT).show();
+				a=1;
+					}
+				else{ 
+						  			///SET FLIPPERVIEW
+					  		ImageFlipperHeaderBannerTemplate flipper_adapter = new ImageFlipperHeaderBannerTemplate(CategeriesList.this,SCreen_Name,header_image,headerAdapterViewFlipper,position_id,ad_id,header_url);
+					  		headerAdapterViewFlipper.setAdapter(flipper_adapter);
+					  		
+					  		ImageFlipperFooterBannerTemplate flipper_adapter_footer = new ImageFlipperFooterBannerTemplate(CategeriesList.this,SCreen_Name,footer_image,footerAdapterViewFlipper,position_id,ad_id,footer_url);
+					  		footerAdapterViewFlipper.setAdapter(flipper_adapter_footer);
+					  		
+					  		/* if (mFlipping == 0) {
+									
+									for ( i = 0; i <header_image.length; i ++) { 
+									
+										//iv = new ImageView (Home.this);
+
+									URL myFileUrl;
+									HttpURLConnection conn;
+									try {
+									myFileUrl = new URL(header_image[i]);
+									conn = (HttpURLConnection)myFileUrl.openConnection();
+
+									conn.setDoInput(true);
+									conn.connect();
+
+									InputStream is = conn.getInputStream();
+									// imv.setImageBitmap(BitmapFactory.decodeStream(is));
+									Bitmap bitmap = BitmapFactory.decodeStream(is);
+
+									imageveiew_flipper.setImageBitmap(bitmap);
+
+									} catch (IOException e) {
+									// TODO Auto-generated catch block
+									}
+
+									imageveiew_flipper.setScaleType (ImageView.ScaleType.FIT_XY);
+									view_flipper1.addView (imageveiew_flipper);
+									}
+
+
+									view_flipper1.setAutoStart (true); 
+									view_flipper1.setFlipInterval (5000);
+									if (view_flipper1.isAutoStart () &&! view_flipper1.isFlipping ()) {
+										view_flipper1.startFlipping ();
+
+
+									}
+								//	mFlipping=1;
+									//mButton.setText(R.string.str_btn_stop);} else {
+									//** Stop Flipping *//*
+									//flipper_header_banner.stopFlipping();
+									//mFlipping = 0;
+
+									}
+								else {
+									//** Stop Flipping *//*
+									view_flipper1.stopFlipping();
+											mFlipping = 0;
+
+									}
+					  		 
+					  	*/
+								}
+					
+								
+						
+			}
+
+	@Override
+	protected Boolean doInBackground(String... params) 
+			{
+					jSonPArsing();
+					return null;
+			}
+	
+	private void jSonPArsing() 
+		{
+					try 
+						{
+		
+							boolean isValid = true;
+				
+							String final_catURL =com.utils.Constant.URL_Get_Banner_Information+"&screen="+SCreen_Name;
+							System.out.println("Final_URL=="+final_catURL);
+							
+							if (isValid) {
+				
+								HttpPost request = new HttpPost(final_catURL);
+								request.setHeader("Accept", "application/json");
+								request.setHeader("Content-type", "application/json");
+				
+								JSONStringer myrequest = new JSONStringer().object().endObject();
+				
+								Log.i("JSON REquest  : ", myrequest.toString());
+				
+								StringEntity entity = new StringEntity(myrequest.toString());
+				
+								entity.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE,
+										"application/json"));
+				
+								entity.setContentType("application/json");
+				
+								request.setEntity(entity);
+				
+								// Send request to WCF service
+								DefaultHttpClient httpClient = new DefaultHttpClient();
+								HttpResponse response = httpClient.execute(request);
+								HttpEntity httpEntity = response.getEntity();
+								String xml = EntityUtils.toString(httpEntity);
+				
+								
+								Log.i("JSON REsponse xml ", "" + xml);
+								JSONObject jsnobj = new JSONObject(xml);
+				
+								String response_12 = jsnobj.getString("ad");
+								
+				
+								JSONArray jsonarray = new JSONArray(response_12);
+				
+								int arraylength = jsonarray.length();
+								System.out.println("Jsonarray length==" + arraylength);
+								
+								position_id = new String[arraylength];
+								header_url = new String[arraylength];
+								footer_url = new String[arraylength];
+								header_image = new String[arraylength];
+								footer_image = new String[arraylength];
+								ad_id = new String[arraylength];
+								
+								
+				
+								for (int i = 0; i < arraylength; i++) {
+				
+									JSONObject jsonobjarray = jsonarray.getJSONObject(i);
+				
+									position_id[i] = jsonobjarray.getString("position_id");
+									ad_id[i] = jsonobjarray.getString("id");
+									header_url[i] = jsonobjarray.getString("header_url");
+									footer_url[i] = jsonobjarray.getString("footer_url");
+									header_image[i] = jsonobjarray.getString("header_image");
+									footer_image[i] = jsonobjarray.getString("footer_image");
+									
+									System.out.println("header_url=78==" + header_url);
+				
+								}
+								System.out.println("header_url length==" + header_image.length);
+							//	Constant.header_banner_redirect_url = header_url;
+							//	Constant.footer_banner_redirect_url = footer_url;
+							//	BitmapHeader(header_image);
+								//BitmapFooter(footer_image);
+								
+		
+							}
+					
+						}
+							catch (Exception e) 
+								{ a=0;
+									Log.e("log_tag", "Error in http connection" + e.toString());
+							    }
+				
+				
+		 
+			}
+}
+	@Override
+	  protected void onStart() 
+			{
+		  			super.onStart();
+		  			// Get current context.
+		  			EasyTracker.getInstance(CategeriesList.this).activityStart(this); // Add this method
+			}
+
+		@Override
+		protected void onStop() 
+			{
+		  			super.onStop();
+		  			// 	unregisterReceiver(mApplicationsReceive);
+		  			EasyTracker.getInstance(CategeriesList.this).activityStop(this); // Add this method
+			}
+
+		  @Override
+		  public void onDestroy() 
+		  		{
+		  			try 
+		  				{
+		  						super.onDestroy();
+		  						//	unregisterReceiver(mApplicationsReceive);
+		  						EasyTracker.getInstance(CategeriesList.this).activityStop(this);
+
+		  				}
+
+		  				catch (Exception error) 
+		  						{
+		  							Log.e("<YOUR_TAG>", "onDestroy: " + error.toString());
+		  						}
+		  		}
+}
